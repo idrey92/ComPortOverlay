@@ -293,28 +293,47 @@ internal sealed class ComPortOverlay : Form
         graphics.TranslateTransform(bounds.Left, bounds.Top);
         graphics.ScaleTransform(bounds.Width / 32F, bounds.Height / 32F);
         graphics.SmoothingMode = SmoothingMode.AntiAlias;
+        graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
 
         using (GraphicsPath tile = RoundedRectangle(1, 1, 30, 30, 8))
-        using (SolidBrush tileBrush = new SolidBrush(Color.FromArgb(34, 54, 67)))
-        using (Pen tileOutline = new Pen(Color.FromArgb(75, 133, 139), 1.2F))
-        using (Pen cablePen = new Pen(Color.FromArgb(86, 194, 180), 2.2F))
-        using (GraphicsPath connector = new GraphicsPath())
-        using (SolidBrush connectorBrush = new SolidBrush(Color.FromArgb(49, 85, 98)))
-        using (Pen connectorPen = new Pen(Color.FromArgb(112, 220, 204), 1.4F))
-        using (SolidBrush pinBrush = new SolidBrush(Color.FromArgb(227, 236, 225)))
+        using (SolidBrush tileBrush = new SolidBrush(Color.FromArgb(24, 34, 48)))
+        using (Pen tileOutline = new Pen(Color.FromArgb(64, 109, 116), 1.1F))
         {
-            graphics.DrawLine(cablePen, 16, 22, 16, 28);
             graphics.FillPath(tileBrush, tile);
             graphics.DrawPath(tileOutline, tile);
-            connector.AddPolygon(new PointF[]
+
+            using (GraphicsPath shell = new GraphicsPath())
+            using (SolidBrush shellBrush = new SolidBrush(Color.FromArgb(38, 83, 94)))
+            using (Pen shellPen = new Pen(Color.FromArgb(112, 220, 204), 1.35F))
             {
-                new PointF(7, 8), new PointF(25, 8), new PointF(22, 21), new PointF(10, 21)
-            });
-            graphics.FillPath(connectorBrush, connector);
-            graphics.DrawPath(connectorPen, connector);
-            for (int row = 0; row < 2; row++)
-                for (int column = 0; column < 3; column++)
-                    graphics.FillEllipse(pinBrush, 10.2F + column * 5.8F, 11.2F + row * 5.4F, 2.2F, 2.2F);
+                shell.AddPolygon(new PointF[]
+                {
+                    new PointF(5.5F, 7.5F), new PointF(26.5F, 7.5F),
+                    new PointF(23.5F, 22.8F), new PointF(21.5F, 25.0F),
+                    new PointF(10.5F, 25.0F), new PointF(8.5F, 22.8F)
+                });
+                graphics.FillPath(shellBrush, shell);
+                graphics.DrawPath(shellPen, shell);
+
+                using (GraphicsPath inset = new GraphicsPath())
+                using (SolidBrush insetBrush = new SolidBrush(Color.FromArgb(22, 42, 54)))
+                {
+                    inset.AddPolygon(new PointF[]
+                    {
+                        new PointF(8.0F, 10.0F), new PointF(24.0F, 10.0F),
+                        new PointF(21.8F, 21.8F), new PointF(10.2F, 21.8F)
+                    });
+                    graphics.FillPath(insetBrush, inset);
+                }
+            }
+
+            using (SolidBrush pinBrush = new SolidBrush(Color.FromArgb(224, 250, 245)))
+            {
+                for (int column = 0; column < 5; column++)
+                    graphics.FillEllipse(pinBrush, 9.25F + column * 3.2F, 12.2F, 1.5F, 1.5F);
+                for (int column = 0; column < 4; column++)
+                    graphics.FillEllipse(pinBrush, 10.85F + column * 3.2F, 17.5F, 1.5F, 1.5F);
+            }
         }
         graphics.Restore(state);
     }

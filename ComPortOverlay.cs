@@ -520,7 +520,7 @@ internal sealed class ComPortOverlay : Form
             dialog.Controls.Add(list);
 
             CheckBox startupCheck = new CheckBox();
-            startupCheck.Text = "Запускать программу при входе в Windows";
+            startupCheck.Text = "Запускать при входе в Windows (копировать в папку пользователя)";
             startupCheck.Location = new Point(14, 250);
             startupCheck.Size = new Size(412, 24);
             startupCheck.Checked = IsRunAtStartup();
@@ -619,12 +619,16 @@ internal sealed class ComPortOverlay : Form
     {
         try
         {
+            string startupExecutable = Application.ExecutablePath;
+            if (enabled)
+                startupExecutable = CopyToUserApplicationFolder();
+
             using (RegistryKey key = Registry.CurrentUser.CreateSubKey(
                 @"Software\Microsoft\Windows\CurrentVersion\Run"))
             {
                 if (key == null) throw new InvalidOperationException("Не удалось открыть раздел автозапуска.");
                 if (enabled)
-                    key.SetValue("ComPortOverlayTray", "\"" + Application.ExecutablePath + "\"", RegistryValueKind.String);
+                    key.SetValue("ComPortOverlayTray", "\"" + startupExecutable + "\"", RegistryValueKind.String);
                 else
                     key.DeleteValue("ComPortOverlayTray", false);
             }
@@ -632,10 +636,30 @@ internal sealed class ComPortOverlay : Form
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this, "Не удалось изменить настройку автозапуска:\r\n" + ex.Message,
+            MessageBox.Show(this, "Не удалось подготовить копию программы или изменить автозапуск:\r\n" + ex.Message,
                 "Автозапуск COM-панели", MessageBoxButtons.OK, MessageBoxIcon.Error);
             return false;
         }
+    }
+
+    private static string CopyToUserApplicationFolder()
+    {
+        string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        if (String.IsNullOrWhiteSpace(localAppData))
+            throw new InvalidOperationException("Не удалось определить папку Local AppData пользователя.");
+
+        string destination = Path.Combine(localAppData, "ComPortOverlay", "ComPortOverlay.exe");
+        string sourcePath = Path.GetFullPath(Application.ExecutablePath);
+        string destinationPath = Path.GetFullPath(destination);
+
+        if (!String.Equals(sourcePath, destinationPath, StringComparison.OrdinalIgnoreCase))
+        {
+            string directory = Path.GetDirectoryName(destinationPath);
+            Directory.CreateDirectory(directory);
+            File.Copy(sourcePath, destinationPath, true);
+        }
+
+        return destinationPath;
     }
 
     [STAThread]
